@@ -31,8 +31,12 @@
     { key: 'farms', name: '鹅场管理', ico: 'building' },
     { key: 'alerts', name: '监测预警', ico: 'radar', badge: function () { return S.db().alerts.filter(function (a) { return a.status === '待处理'; }).length; } },
     { key: 'mortality', name: '死淘记录', ico: 'clipboard' },
+    { key: 'immun', name: '免疫防疫', ico: 'medical' },
+    { key: 'feed', name: '饲料管理', ico: 'grain' },
     { key: 'evidence', name: '保险存证', ico: 'shield' },
     { key: 'devices', name: '设备管理', ico: 'cpu' },
+    { key: 'checkin', name: '巡舍考勤', ico: 'clock' },
+    { key: 'messages', name: '消息通知', ico: 'mail', badge: function () { return S.db().messages.filter(function (m) { return !m.read; }).length; } },
     { key: 'reports', name: '数据报表', ico: 'chart' },
     { key: 'settings', name: '系统设置', ico: 'gear' }
   ];
@@ -1029,6 +1033,392 @@
       byFarm: byFarm
     };
   }
+
+t
+  /* ================= 页面：免疫防疫 ================= */
+  function ensureImmun() {
+    var db = S.db();
+    if (db.immun && db.immun.length) return db.immun;
+    var vacs = [['禽流感 H9 灭活苗', '1.0 ml', '注射'], ['小鹅瘟活疫苗', '1.0 ml', '注射'],
+                ['鹅副粘病毒灭活苗', '0.8 ml', '注射'], ['大肠杆菌多价苗', '2.0 ml', '饮水'],
+                ['鸭瘟-小鹅瘟二联苗', '1.2 ml', '注射']];
+    var houses = S.houses().filter(function (h) { return h.status === '在养'; });
+    var vets = ['郭良瑞', '李莹', '王振宇'];
+    var now = new Date(), out = [];
+    for (var i = 0; i < 16; i++) {
+      var h = houses[i % houses.length], v = vacs[i % vacs.length];
+      var d = new Date(now.getTime() - (i * 3 + 1) * 864e5 - (i % 4) * 3600e3);
+      out.push({
+        id: F.uid('im'), date: F.dstr(d), houseCode: h.code,
+        vaccine: v[0], dose: v[1], route: v[2],
+        vet: vets[i % vets.length], status: '已完成'
+      });
+    }
+    for (var k = 0; k < 2; k++) {
+      var d2 = new Date(now.getTime() + (k + 1) * 864e5);
+      out.push({
+        id: F.uid('im'), date: F.dstr(d2), houseCode: houses[k].code,
+        vaccine: vacs[k + 1][0], dose: vacs[k + 1][1], route: vacs[k + 1][2],
+        vet: '郭良瑞', status: '待执行'
+      });
+    }
+    out.sort(function (a, b) { return a.date < b.date ? 1 : -1; });
+    db.immun = out; S.save();
+    return out;
+  }
+  PAGES.immun = {
+    title: '免疫防疫', sub: '疫苗免疫计划与执行记录',
+    act: function () { return '<button class="btn btn-primary btn-sm" data-a="add">' + icon('plus') + '新增免疫</button>'; },
+    html: function () {
+      var rows = ensureImmun();
+      var ym = F.dstr(new Date()).slice(0, 7);
+      var monthN = rows.filter(function (r) { return r.date.slice(0, 7) === ym; }).length;
+      var todo = rows.filter(function (r) { return r.status === '待执行'; }).length;
+      var houses = {};
+      rows.forEach(function (r) { houses[r.houseCode] = 1; });
+      var q = (st.immunQ = st.immunQ || '').trim().toLowerCase();
+      var list = rows.filter(function (r) {
+        if (!q) return true;
+        return (r.houseCode + r.vaccine + r.vet).toLowerCase().indexOf(q) > -1;
+      });
+      return '<div class="stat-strip">' +
+        '<div class="stat"><span>本月免疫</span><b>' + monthN + ' 次</b></div>' +
+        '<div class="stat"><span>待执行</span><b style="color:#f79009">' + todo + ' 次</b></div>' +
+        '<div class="stat"><span>覆盖鹅舍</span><b>' + Object.keys(houses).length + ' 栋</b></div>' +
+        '<div class="stat"><span>累计记录</span><b>' + rows.length + ' 条</b></div></div>' +
+        '<div class="toolbar"><div class="field grow"><label>搜索</label><input id="iq" value="' + esc(st.immunQ || '') + '" placeholder="鹅舍 / 疫苗 / 兽医"></div>' +
+        '<div class="toolbar-r"><span class="mini-note">共 ' + list.length + ' 条</span></div></div>' +
+        '<div class="card">' + U.table({
+          columns: [
+            { title: '免疫日期', key: 'date' },
+            { title: '鹅舍', render: function (r) { return '<b>鹅舍' + esc(r.houseCode) + '</b>'; } },
+            { title: '疫苗名称', render: function (r) { return '<b>' + esc(r.vaccine) + '</b>'; } },
+            { title: '剂量', key: 'dose' },
+            { title: '方式', render: function (r) { return '<span class="badge" style="background:#f0ebff;color:#6d3ce0">' + esc(r.route) + '</span>'; } },
+            { title: '执行兽医', key: 'vet' },
+            { title: '状态', align: 'center', render: function (r) {
+                return r.status === '已完成' ? '<span class="badge" style="background:#e7f8ef;color:#12b76a">已完成</span>' : '<span class="badge" style="background:#fdf3e3;color:#f79009">待执行</span>';
+              } },
+            { title: '操作', align: 'center', render: function (r) {
+                return '<div class="row-act"><button class="btn btn-sm btn-ghost" data-mark="' + r.id + '">' + (r.status === '待执行' ? '完成' : '改回') + '</button>' +
+                  '<button class="btn btn-sm btn-danger" data-del="' + r.id + '">' + icon('trash') + '</button></div>';
+              } }
+          ],
+          rows: list, empty: '暂无免疫记录'
+        }) + '</div>';
+    },
+    mount: function (root) {
+      bindInput($('#iq', root), function (v) { st.immunQ = v; render(true); });
+      $('[data-a="add"]', root).onclick = function () {
+        var houses = S.houses().filter(function (h) { return h.status === '在养'; });
+        U.modal({
+          title: '新增免疫记录',
+          body: U.formHtml([
+            { name: 'date', label: '免疫日期', type: 'date', required: true, value: F.dstr(new Date()) },
+            { name: 'houseCode', label: '鹅舍', type: 'select', value: houses[0].code, options: houses.map(function (h) { return { value: h.code, text: '鹅舍' + h.code }; }) },
+            { name: 'vaccine', label: '疫苗名称', required: true, placeholder: '如 禽流感 H9 灭活苗', value: '禽流感 H9 灭活苗' },
+            { name: 'dose', label: '剂量', type: 'select', options: ['0.5 ml', '0.8 ml', '1.0 ml', '1.2 ml', '2.0 ml', '饮水 1000 羽份'] },
+            { name: 'route', label: '免疫方式', type: 'select', options: ['注射', '饮水', '滴鼻点眼'] },
+            { name: 'vet', label: '执行兽医', required: true, value: me.name },
+            { name: 'status', label: '状态', type: 'select', options: ['已完成', '待执行'] }
+          ], true),
+          actions: [{ text: '取消' }, { text: '保存', primary: true, onClick: function (api) {
+              var v = U.formCheck(api.body, [{ name: 'date', label: '免疫日期', required: true }, { name: 'vaccine', label: '疫苗名称', required: true }, { name: 'vet', label: '执行兽医', required: true }]);
+              if (!v) return;
+              v.id = F.uid('im');
+              S.db().immun.push(v);
+              S.db().immun.sort(function (a, b) { return a.date < b.date ? 1 : -1; });
+              S.save(); api.close(); U.toast('免疫记录已保存', 'ok');
+            } }]
+        });
+      };
+      $$('[data-mark]', root).forEach(function (b) {
+        b.onclick = function () {
+          S.db().immun.forEach(function (r) {
+            if (r.id === b.dataset.mark) r.status = r.status === '待执行' ? '已完成' : '待执行';
+          });
+          S.save(); render(true); U.toast('状态已更新', 'ok');
+        };
+      });
+      $$('[data-del]', root).forEach(function (b) {
+        b.onclick = function () {
+          U.confirm('确定删除该免疫记录？').then(function (ok) {
+            if (!ok) return;
+            S.db().immun = S.db().immun.filter(function (r) { return r.id !== b.dataset.del; });
+            S.save(); render(true); U.toast('已删除', 'ok');
+          });
+        };
+      });
+    }
+  };
+
+  /* ================= 页面：饲料管理 ================= */
+  function ensureFeed() {
+    var db = S.db();
+    if (db.feed && db.feed.length) return db.feed;
+    db.feed = [
+      { name: '全价育肥颗粒料', stock: 26800, dayUse: 1250, last: F.tstr(new Date(Date.now() - 2 * 864e5)), logs: [] },
+      { name: '玉米', stock: 8200, dayUse: 460, last: F.tstr(new Date(Date.now() - 5 * 864e5)), logs: [] },
+      { name: '豆粕', stock: 4300, dayUse: 185, last: F.tstr(new Date(Date.now() - 5 * 864e5)), logs: [] },
+      { name: '麸皮', stock: 1650, dayUse: 120, last: F.tstr(new Date(Date.now() - 8 * 864e5)), logs: [] },
+      { name: '预混料', stock: 520, dayUse: 26, last: F.tstr(new Date(Date.now() - 12 * 864e5)), logs: [] }
+    ];
+    S.save();
+    return db.feed;
+  }
+  PAGES.feed = {
+    title: '饲料管理', sub: '饲料库存、日耗与补料台账',
+    act: function () { return '<button class="btn btn-line btn-sm" data-a="csv">' + icon('download') + '导出库存</button>'; },
+    html: function () {
+      var items = ensureFeed();
+      var warnN = items.filter(function (it) { return it.dayUse > 0 && it.stock / it.dayUse < 14; }).length;
+      var totalKg = items.reduce(function (s, it) { return s + it.stock; }, 0);
+      var plan = items.reduce(function (s, it) { return s + it.dayUse; }, 0);
+      function dayOf(it) { return it.dayUse > 0 ? Math.floor(it.stock / it.dayUse) : 999; }
+      return '<div class="stat-strip">' +
+        '<div class="stat"><span>库存品种</span><b>' + items.length + ' 种</b></div>' +
+        '<div class="stat"><span>库存总量</span><b>' + F.num(Math.round(totalKg / 1000 * 10) / 10) + ' 吨</b></div>' +
+        '<div class="stat"><span>补料预警</span><b style="color:' + (warnN ? '#f79009' : '#12b76a') + '">' + warnN + ' 种</b></div>' +
+        '<div class="stat"><span>今日计划投料</span><b>' + F.num(plan) + ' kg</b></div></div>' +
+        '<div class="card">' + U.table({
+          columns: [
+            { title: '品名', render: function (r) { return '<b>' + esc(r.name) + '</b>'; } },
+            { title: '当前库存', align: 'right', render: function (r) { return '<b>' + F.num(r.stock) + '</b> kg'; } },
+            { title: '日耗量', align: 'right', render: function (r) { return r.dayUse ? F.num(r.dayUse) + ' kg' : '—'; } },
+            { title: '可用天数', align: 'center', render: function (r) {
+                var d = dayOf(r);
+                var c = d < 7 ? ['#f04438', '#feecea'] : d < 14 ? ['#f79009', '#fdf3e3'] : ['#12b76a', '#e7f8ef'];
+                return '<span class="badge" style="background:' + c[1] + ';color:' + c[0] + '">约 ' + d + ' 天</span>';
+              } },
+            { title: '上次补料', key: 'last' },
+            { title: '操作', align: 'center', render: function (r, i) {
+                return '<div class="row-act"><button class="btn btn-sm btn-primary" data-feed="' + i + '">补料登记</button>' +
+                  '<button class="btn btn-sm btn-ghost" data-flog="' + i + '">流水</button></div>';
+              } }
+          ],
+          rows: items, empty: '暂无库存数据'
+        }) + '</div>';
+    },
+    mount: function (root) {
+      $('[data-a="csv"]', root).onclick = function () {
+        U.csv('饲料库存_' + F.dstr(new Date()) + '.csv', ['品名', '库存(kg)', '日耗(kg)', '上次补料'],
+          ensureFeed().map(function (it) { return [it.name, it.stock, it.dayUse, it.last]; }));
+      };
+      $$('[data-feed]', root).forEach(function (b) {
+        b.onclick = function () {
+          var it = ensureFeed()[+b.dataset.feed];
+          U.modal({
+            title: '补料登记 · ' + it.name,
+            body: U.formHtml([
+              { name: 'qty', label: '补料数量（kg）', type: 'number', required: true, min: 1, max: 100000 },
+              { name: 'remark', label: '备注', type: 'textarea', col2: true, placeholder: '供应商 / 批次 / 质检情况' }
+            ], true),
+            actions: [{ text: '取消' }, { text: '确认入库', primary: true, onClick: function (api) {
+                var v = U.formCheck(api.body, [{ name: 'qty', label: '补料数量', required: true, type: 'number', min: 1 }]);
+                if (!v) return;
+                it.stock += +v.qty;
+                it.last = F.tstr(new Date());
+                it.logs.unshift({ ts: it.last, qty: +v.qty, remark: v.remark || '', user: me.name });
+                if (it.logs.length > 30) it.logs.length = 30;
+                S.save(); api.close(); render(true); U.toast('已入库 ' + v.qty + ' kg', 'ok');
+              } }]
+          });
+        };
+      });
+      $$('[data-flog]', root).forEach(function (b) {
+        b.onclick = function () {
+          var it = ensureFeed()[+b.dataset.flog];
+          var logs = it.logs || [];
+          U.drawer({
+            title: it.name + ' · 补料流水',
+            html: logs.length ? logs.slice(0, 12).map(function (l) {
+              return '<div class="dl"><b>' + l.ts.slice(5, 16) + '</b><span>+' + l.qty + ' kg · ' + esc(l.user) + (l.remark ? ' · ' + esc(l.remark) : '') + '</span></div>';
+            }).join('') : '<div class="empty">暂无补料记录</div>',
+            actions: [{ text: '关闭', primary: true }]
+          });
+        };
+      });
+    }
+  };
+
+  /* ================= 页面：巡舍考勤 ================= */
+  function ensureCheckins() {
+    var db = S.db();
+    if (db.checkins && db.checkins.length) return db.checkins;
+    var staff = ['王振宇', '郭良瑞', '郝天祥', '赵琦'];
+    var houses = S.houses().filter(function (h) { return h.status === '在养'; });
+    var now = new Date(), out = [];
+    for (var d = 6; d >= 0; d--) {
+      staff.forEach(function (s, i) {
+        if (Math.random() < 0.82) {
+          var t = new Date(now.getTime() - d * 864e5);
+          t.setHours(7 + (i % 3), 20 + i * 11, 0, 0);
+          out.push({ id: F.uid('ck'), dt: F.tstr(t), name: s, houseCode: houses[(i + d) % houses.length].code, type: '日巡', note: '例行巡舍' });
+        }
+        if (Math.random() < 0.4) {
+          var t2 = new Date(now.getTime() - d * 864e5);
+          t2.setHours(21, 10 + i * 5, 0, 0);
+          out.push({ id: F.uid('ck'), dt: F.tstr(t2), name: s, houseCode: houses[(i + d + 1) % houses.length].code, type: '夜巡', note: '夜间巡查' });
+        }
+      });
+    }
+    out.sort(function (a, b) { return a.dt < b.dt ? 1 : -1; });
+    db.checkins = out; S.save();
+    return out;
+  }
+  PAGES.checkin = {
+    title: '巡舍考勤', sub: '员工巡舍打卡与考勤记录',
+    act: function () { return '<button class="btn btn-primary btn-sm" data-a="add">' + icon('plus') + '补录打卡</button>'; },
+    html: function () {
+      var rows = ensureCheckins();
+      var today = F.dstr(new Date());
+      var todayN = rows.filter(function (r) { return r.dt.slice(0, 10) === today; }).length;
+      var weekN = rows.filter(function (r) { return r.dt > F.dstr(F.day(-7)); }).length;
+      var staff = {};
+      rows.forEach(function (r) { staff[r.name] = 1; });
+      var stf = st.ckStaff || '';
+      var list = rows.filter(function (r) { return !stf || r.name === stf; });
+      return '<div class="stat-strip">' +
+        '<div class="stat"><span>今日打卡</span><b>' + todayN + ' 人次</b></div>' +
+        '<div class="stat"><span>近7日</span><b>' + weekN + ' 人次</b></div>' +
+        '<div class="stat"><span>出勤员工</span><b>' + Object.keys(staff).length + ' 人</b></div>' +
+        '<div class="stat"><span>累计记录</span><b>' + rows.length + ' 条</b></div></div>' +
+        '<div class="toolbar"><div class="field grow"><label>员工</label>' +
+        '<select id="ckStaff" class="input" style="width:auto;min-width:150px"><option value="">全部员工</option>' +
+        Object.keys(staff).map(function (s) { return '<option value="' + esc(s) + '"' + (stf === s ? ' selected' : '') + '>' + esc(s) + '</option>'; }).join('') +
+        '</select></div>' +
+        '<div class="toolbar-r"><span class="mini-note">共 ' + list.length + ' 条</span></div></div>' +
+        '<div class="card">' + U.table({
+          columns: [
+            { title: '打卡时间', key: 'dt' },
+            { title: '员工', render: function (r) { return '<b>' + esc(r.name) + '</b>'; } },
+            { title: '鹅舍', render: function (r) { return '鹅舍' + esc(r.houseCode); } },
+            { title: '班次', align: 'center', render: function (r) { return '<span class="badge" style="background:' + (r.type === '夜巡' ? '#e9f2ff;color:#2e90fa' : '#f0ebff;color:#6d3ce0') + '">' + esc(r.type) + '</span>'; } },
+            { title: '备注', render: function (r) { return esc(r.note || '—'); } },
+            { title: '操作', align: 'center', render: function (r) { return '<button class="btn btn-sm btn-danger" data-del="' + r.id + '">' + icon('trash') + '</button>'; } }
+          ],
+          rows: list.slice(0, 60), empty: '暂无打卡记录'
+        }) + '</div>';
+    },
+    mount: function (root) {
+      var sel = $('#ckStaff', root);
+      if (sel) sel.onchange = function () { st.ckStaff = this.value; render(true); };
+      $('[data-a="add"]', root).onclick = function () {
+        var houses = S.houses().filter(function (h) { return h.status === '在养'; });
+        var staff = ['李莹', '王振宇', '郭良瑞', '郝天祥', '赵琦'];
+        U.modal({
+          title: '补录打卡',
+          body: U.formHtml([
+            { name: 'dt', label: '打卡时间', type: 'date', required: true, value: F.dstr(new Date()) },
+            { name: 'name', label: '员工', type: 'select', options: staff },
+            { name: 'houseCode', label: '鹅舍', type: 'select', options: houses.map(function (h) { return { value: h.code, text: '鹅舍' + h.code }; }) },
+            { name: 'type', label: '班次', type: 'select', options: ['日巡', '夜巡'] },
+            { name: 'note', label: '备注', type: 'textarea', col2: true, placeholder: '巡舍情况' }
+          ], true),
+          actions: [{ text: '取消' }, { text: '保存', primary: true, onClick: function (api) {
+              var v = U.formCheck(api.body, [{ name: 'dt', label: '打卡时间', required: true }]);
+              if (!v) return;
+              v.id = F.uid('ck');
+              var hm = new Date();
+              v.dt = v.dt + ' ' + F.p2(hm.getHours()) + ':' + F.p2(hm.getMinutes());
+              v.note = v.note || '补录打卡';
+              S.db().checkins.unshift(v);
+              S.db().checkins.sort(function (a, b) { return a.dt < b.dt ? 1 : -1; });
+              S.save(); api.close(); render(true); U.toast('打卡已补录', 'ok');
+            } }]
+        });
+      };
+      $$('[data-del]', root).forEach(function (b) {
+        b.onclick = function () {
+          U.confirm('确定删除该条打卡？').then(function (ok) {
+            if (!ok) return;
+            S.db().checkins = S.db().checkins.filter(function (r) { return r.id !== b.dataset.del; });
+            S.save(); render(true); U.toast('已删除', 'ok');
+          });
+        };
+      });
+    }
+  };
+
+  /* ================= 页面：消息通知 ================= */
+  PAGES.messages = {
+    title: '消息通知', sub: '站内通知与告警消息汇总',
+    act: function () {
+      return '<button class="btn btn-line btn-sm" data-a="readAll">全部已读</button>' +
+        '<button class="btn btn-primary btn-sm" data-a="send">' + icon('plus') + '发布通知</button>';
+    },
+    html: function () {
+      var ms = S.db().messages.slice();
+      var unread = ms.filter(function (m) { return !m.read; }).length;
+      return '<div class="stat-strip">' +
+        '<div class="stat"><span>全部消息</span><b>' + ms.length + ' 条</b></div>' +
+        '<div class="stat"><span>未读</span><b style="color:#f04438">' + unread + ' 条</b></div>' +
+        '<div class="stat"><span>告警类</span><b>' + ms.filter(function (m) { return m.kind === 'warn'; }).length + ' 条</b></div>' +
+        '<div class="stat"><span>本月</span><b>' + ms.filter(function (m) { return m.ts.slice(0, 7) === F.dstr(new Date()).slice(0, 7); }).length + ' 条</b></div></div>' +
+        '<div class="card">' + U.table({
+          columns: [
+            { title: '时间', key: 'ts' },
+            { title: '标题', render: function (r) {
+                return (r.read ? '' : '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#f04438;margin-right:7px"></span>') + '<b>' + esc(r.title) + '</b>';
+              } },
+            { title: '内容', render: function (r) { return '<span style="color:var(--ink-2)">' + esc(String(r.body || '').slice(0, 36)) + (r.body && r.body.length > 36 ? '…' : '') + '</span>'; } },
+            { title: '类别', align: 'center', render: function (r) {
+                return r.kind === 'warn' ? '<span class="badge" style="background:#fdf3e3;color:#f79009">告警</span>' : '<span class="badge" style="background:#e9f2ff;color:#2e90fa">通知</span>';
+              } },
+            { title: '状态', align: 'center', render: function (r) { return r.read ? '<span style="color:var(--ink-3)">已读</span>' : '<b style="color:#f04438">未读</b>'; } },
+            { title: '操作', align: 'center', render: function (r) {
+                return '<div class="row-act"><button class="btn btn-sm btn-ghost" data-view="' + r.id + '">查看</button>' +
+                  '<button class="btn btn-sm btn-danger" data-del="' + r.id + '">' + icon('trash') + '</button></div>';
+              } }
+          ],
+          rows: ms.slice(0, 50), empty: '暂无消息'
+        }) + '</div>';
+    },
+    mount: function (root) {
+      $('[data-a="readAll"]', root).onclick = function () {
+        S.db().messages.forEach(function (m) { m.read = true; });
+        S.save(); render(true); paintUser(); U.toast('已全部标记为已读', 'ok');
+      };
+      $('[data-a="send"]', root).onclick = function () {
+        if (!guardAdmin()) return;
+        U.modal({
+          title: '发布通知',
+          body: U.formHtml([
+            { name: 'title', label: '标题', required: true, placeholder: '通知标题' },
+            { name: 'body', label: '内容', type: 'textarea', required: true, col2: true, rows: 4, placeholder: '通知正文' }
+          ], true),
+          actions: [{ text: '取消' }, { text: '发布', primary: true, onClick: function (api) {
+              var v = U.formCheck(api.body, [{ name: 'title', label: '标题', required: true }, { name: 'body', label: '内容', required: true }]);
+              if (!v) return;
+              S.db().messages.unshift({ id: F.uid('msg'), title: v.title, body: v.body, ts: F.tstr(new Date()), read: false, kind: 'info' });
+              S.save(); api.close(); render(true); U.toast('通知已发布', 'ok');
+            } }]
+        });
+      };
+      $$('[data-view]', root).forEach(function (b) {
+        b.onclick = function () {
+          var m = S.db().messages.filter(function (x) { return x.id === b.dataset.view; })[0];
+          if (!m) return;
+          m.read = true; S.save(); paintUser();
+          U.modal({
+            title: m.title,
+            body: '<p style="color:var(--ink-2);padding:6px 0 12px">' + esc(m.body) + '</p><p class="mini-note">' + esc(m.ts) + '</p>',
+            actions: [{ text: '知道了', primary: true }]
+          });
+          render(true);
+        };
+      });
+      $$('[data-del]', root).forEach(function (b) {
+        b.onclick = function () {
+          U.confirm('确定删除该消息？').then(function (ok) {
+            if (!ok) return;
+            S.db().messages = S.db().messages.filter(function (x) { return x.id !== b.dataset.del; });
+            S.save(); render(true); U.toast('已删除', 'ok');
+          });
+        };
+      });
+    }
+  };
 
   /* ================= 页面：系统设置 ================= */
   var TH_FIELDS = function (th) {
