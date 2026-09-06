@@ -4,37 +4,37 @@
 
 /* ---------- 侧栏：上图标下文字 ---------- */
 .side {
-  width: 96px; flex: none;
+  width: 86px; flex: none;
   background: linear-gradient(180deg, var(--side-1), var(--side-2));
   color: #cfc7f0;
   display: flex; flex-direction: column;
-  align-items: center; padding: 12px 0 8px;
+  align-items: center; padding: 10px 0 8px;
   z-index: 45;
 }
-.side-brand { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-bottom: 10px; }
-.side-brand b { font-size: 11px; color: #fff; letter-spacing: .5px; }
-.side .brand-mark { width: 30px; height: 30px; border-radius: 9px; }
-.side .brand-mark svg { width: 20px; height: 20px; }
-.side-nav { flex: 1; width: 100%; overflow-y: auto; display: flex; flex-direction: column; gap: 1px; padding: 0 7px; }
+.side-brand { display: flex; flex-direction: column; align-items: center; gap: 3px; margin-bottom: 8px; }
+.side-brand b { font-size: 10.5px; color: #fff; letter-spacing: .5px; }
+.side .brand-mark { width: 26px; height: 26px; border-radius: 8px; }
+.side .brand-mark svg { width: 17px; height: 17px; }
+.side-nav { flex: 1; width: 100%; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; padding: 0 6px; }
 .side-nav::-webkit-scrollbar { width: 0; }
 .side-nav a {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 3px; min-height: 44px; padding: 5px 2px;
-  border-radius: 10px;
+  gap: 3px; min-height: 42px; padding: 4px 2px;
+  border-radius: 9px;
   color: #b6acdf; font-size: 10.5px; line-height: 1; font-weight: 600;
   transition: .15s; position: relative; flex: none;
 }
-.side-nav a .ico { width: 15px; height: 15px; flex: none; }
+.side-nav a .ico { width: 14px; height: 14px; flex: none; }
 .side-nav a:hover { background: rgba(255, 255, 255, .08); color: #fff; }
 .side-nav a.on {
   background: linear-gradient(135deg, rgba(167, 139, 250, .34), rgba(122, 90, 248, .5));
   color: #fff; box-shadow: 0 0 0 1px rgba(255, 255, 255, .15);
 }
 .side-nav a b.dot {
-  position: absolute; top: 4px; right: 8px;
-  min-width: 14px; height: 14px; padding: 0 3px;
+  position: absolute; top: 3px; right: 6px;
+  min-width: 13px; height: 13px; padding: 0 3px;
   border-radius: 99px; background: var(--danger);
-  color: #fff; font-size: 9.5px; line-height: 14px; text-align: center;
+  color: #fff; font-size: 9px; line-height: 13px; text-align: center;
 }
 .side-foot { display: none; }
 
