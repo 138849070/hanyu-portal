@@ -536,26 +536,99 @@
   }
   function reset() { localStorage.removeItem(DB_KEY); _db = null; load(); emit('change', 'reset'); }
 
-  /* ---------------- 导出 API ---------------- */
+  /* ---------------- 导出 API（含新旧两套方法名） ---------------- */
+  var S = load();  /* 保证下面兼容函数闭包能拿到当前库 */
+
+  /* —— 老接口兼容：旧页面调用的名字 —— */
+  function farm(id) { var f = S.farms().filter(function (x) { return x.id === id; })[0]; return f || { name: '—', region: '', manager: '', phone: '' }; }
+  function house(code) { return S.houses().filter(function (h) { return h.code === code; })[0]; }
+  function activeCodes() { return S.houses().filter(function (h) { return h.status === '在养'; }).map(function (h) { return h.code; }); }
+  function unread() { return S.db().messages.filter(function (m) { return !m.read; }).length; }
+  function pending() { return S.db().alerts.filter(function (a) { return a.status === '待处理'; }).length; }
+  function trend(days, filterHouse) {
+    if (!filterHouse) return S.deathTrend(days);
+    var db = S.db();
+    var start = S.util.midnight(-(days - 1)).getTime();
+    var labels = [], byDay = {}, before = 0;
+    for (var i = 0; i < days; i++) { var k = S.util.dstr(S.util.midnight(-(days - 1 - i))); labels.push(k); byDay[k] = 0; }
+    db.mortality.forEach(function (m) {
+      if (m.houseCode !== filterHouse) return;
+      var t = S.util.pdate(m.date).getTime();
+      if (byDay[m.date] !== undefined) byDay[m.date] += m.count;
+      else if (t < start) before += m.count;
+    });
+    var daily = labels.map(function (k) { return byDay[k]; });
+    var acc = before, cum = daily.map(function (v) { acc += v; return Math.round(acc / (db.meta.openingStock || 1) * 1e3) / 10; });
+    return { labels: labels, daily: daily, cum: cum };
+  }
+  function share(days, farmId) {
+    var items = S.alertTypeShare(days, function (a) {
+      if (!farmId) return true;
+      var h = house(a.houseCode);
+      return h && h.farmId === farmId;
+    }).items;
+    return items;
+  }
+
+  /* —— 统一导出 —— */
   global.HY = global.HY || {};
   global.HY.store = {
+    /* 字典与工具 */
     DICT: { ALERT_TYPES: ALERT_TYPES, TYPE_COLORS: TYPE_COLORS, CAUSES: CAUSES, DISPOSALS: DISPOSALS, BREEDS: BREEDS, HOUSE_STATUS: HOUSE_STATUS, ROLES: ROLES },
     util: { dstr: dstr, tstr: tstr, pdate: pdate, pad: pad, midnight: midnight, uid: uid },
     db: load, save: save, commit: commit, reset: reset, on: on, off: off, emit: emit,
+    log: log,
+
+    /* 会话 */
+    session: session, login: login, logout: logout,
+
+    /* 查询（新旧名都有） */
     houses: function () { return load().houses.slice(); },
     farms: function () { return load().farms.slice(); },
-    session: session, login: login, logout: logout, log: log,
-    kpi: kpi, deathTrend: deathTrend, alertTypeShare: alertTypeShare,
-    currentStock: currentStock, houseByCode: houseByCode, farmName: farmName, ageOf: ageOf,
-    saveHouse: saveHouse, removeHouse: removeHouse, saveFarm: saveFarm, removeFarm: removeFarm,
-    addAlert: addAlert, setAlertStatus: setAlertStatus,
+    farm: farm, house: house, houseByCode: houseByCode, farmName: farmName, ageOf: ageOf,
+    activeCodes: activeCodes, unread: unread, pending: pending,
+
+    /* 统计 */
+    kpi: kpi, deathTrend: deathTrend, alertTypeShare: alertTypeShare, trend: trend, share: share,
+    currentStock: currentStock, camStats: camStats, devStats: devStats,
+
+    /* 鹅场 / 鹅舍 */
+    saveHouse: saveHouse, delHouse: removeHouse, removeHouse: removeHouse,
+    saveFarm: saveFarm, delFarm: removeFarm, removeFarm: removeFarm,
+
+    /* 预警 */
+    addAlert: addAlert, setAlertStatus: setAlertStatus, handleAlert: setAlertStatus,
+
+    /* 死淘 */
     saveMortality: saveMortality, removeMortality: removeMortality,
+    saveMort: saveMortality, delMort: removeMortality,
+
+    /* 存证 */
     saveEvidence: saveEvidence, removeEvidence: removeEvidence,
-    saveUser: saveUser, removeUser: removeUser, markMessage: markMessage,
+    addEv: saveEvidence, delEv: removeEvidence, confirmEv: function (id) {
+      var db = load();
+      db.evidence.forEach(function (e) { if (e.id === id) e.status = '已上链'; });
+      log('确认存证上链', id); commit('evidence');
+    },
+
+    /* 用户 / 消息 / 设置 */
+    saveUser: saveUser, delUser: removeUser, removeUser: removeUser,
+    markMessage: markMessage, readMsg: function (id) { markMessage(id, true); },
+    addMsg: function (title, body) {
+      var db = load();
+      db.messages.unshift({ id: uid('msg'), title: title, body: body || '', ts: tstr(new Date()), read: false, kind: 'info' });
+      save(); commit('messages');
+    },
     saveSettings: saveSettings, resetThresholds: resetThresholds, DEFAULT_TH: DEFAULT_TH,
+
+    /* 环境巡检 */
     stepEnv: stepEnv, envState: envState,
-    cams: listCams, camStats: camStats, setCam: setCam,
-    devices: listDevices, devStats: devStats, setDev: setDev,
+
+    /* 视频监控 / 设备 */
+    cams: function () { return listCams(); }, setCam: setCam,
+    devices: function () { return listDevices(); }, setDev: setDev,
+
+    /* 导入导出 */
     exportCsv: exportCsv, exportJson: exportJson, importJson: importJson, download: download
   };
 })(window);
