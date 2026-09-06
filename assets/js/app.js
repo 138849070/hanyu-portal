@@ -14,16 +14,18 @@
   function may(lv){ return lv === 'admin' ? me.role === '超级管理员' : me.role !== '访客'; }
   function guard(lv){
     if (may(lv)) return true;
-    U.toast(lv === 'admin' ? '该操作仅超级管理员可用' : '访客账号仅可查看，请用 admin / 123456 体验完整功能', 'warn', 3200);
+    U.toast(lv === 'admin' ? '该操作仅超级管理员可用' : '当前账号无此操作权限，请联系场长或超级管理员', 'warn', 3200);
     return false;
   }
 
   var NAV = [
     { key:'overview',  name:'总览',     ico:'home' },
+    { key:'monitor',   name:'视频监控', ico:'cam' },
     { key:'farms',     name:'鹅场管理', ico:'building' },
     { key:'alerts',    name:'监测预警', ico:'radar', badge:function(){ return S.pending(); } },
     { key:'mortality', name:'死淘记录', ico:'clipboard' },
     { key:'evidence',  name:'保险存证', ico:'shield' },
+    { key:'devices',   name:'设备管理', ico:'cpu' },
     { key:'reports',   name:'数据报表', ico:'chart' },
     { key:'settings',  name:'系统设置', ico:'gear' }
   ];
@@ -216,7 +218,7 @@
       { name:'name', label:'姓名', required:true, value:u.name },
       { name:'pwd', label:'密码', required:true, value:u.pwd || '123456' },
       { name:'phone', label:'手机号', value:u.phone || '' },
-      { name:'role', label:'角色', type:'select', value:u.role, options:['超级管理员','场长','饲养员','访客'] },
+      { name:'role', label:'角色', type:'select', value:u.role, options:['超级管理员','场长','兽医','饲养员'] },
       { name:'status', label:'状态', type:'select', value:u.status, options:['启用','禁用'] }
     ];
     U.modal({
@@ -319,7 +321,206 @@
     });
   }
 
-  /* ================= 页面：鹅场管理 ================= */
+  /* ================= 页面：视频监控 ================= */
+  PAGES.monitor = {
+    title: '视频监控', sub: '鹅舍监控通道与 AI 识别联动',
+    act: function () { return '<button class="btn btn-line btn-sm" data-a="refresh">' + U.icon('refresh') + '刷新通道</button>'; },
+    html: function () {
+      var ms = st.mon || (st.mon = { farm: '', status: '全部' });
+      var farms = S.farms();
+      var all = S.cams();
+      var list = all.filter(function (c) {
+        if (ms.farm && c.farmId !== ms.farm) return false;
+        if (ms.status === '在线' && !c.online) return false;
+        if (ms.status === '离线' && c.online) return false;
+        return true;
+      });
+      var cs = S.camStats();
+      var now = S.util.tstr(new Date());
+      var farmSel = '<option value="">全部鹅场</option>' + farms.map(function (f) {
+        return '<option value="' + f.id + '"' + (ms.farm === f.id ? ' selected' : '') + '>' + f.name + '</option>';
+      }).join('');
+      return '<div class="stat-strip">' +
+        '<div class="stat"><span>监控通道</span><b>' + cs.total + ' 路</b></div>' +
+        '<div class="stat"><span>在线</span><b style="color:var(--ok)">' + cs.on + ' 路</b></div>' +
+        '<div class="stat"><span>离线</span><b style="color:var(--danger)">' + cs.off + ' 路</b></div>' +
+        '<div class="stat"><span>AI 识别中</span><b style="color:var(--warn)">' + cs.ai + ' 路</b></div>' +
+      '</div>' +
+      '<div class="mv-tool">' +
+        '<select class="input" id="mvFarm" style="width:auto;min-width:170px">' + farmSel + '</select>' +
+        '<div class="chips" id="mvStatus" style="margin:0">' +
+          '<span class="chip' + (ms.status === '全部' ? ' on' : '') + '" data-s="全部">全部</span>' +
+          '<span class="chip' + (ms.status === '在线' ? ' on' : '') + '" data-s="在线">在线</span>' +
+          '<span class="chip' + (ms.status === '离线' ? ' on' : '') + '" data-s="离线">离线</span>' +
+        '</div>' +
+        '<div class="toolbar-r mini-note">当前显示 ' + list.length + ' 路 · 最后更新 ' + now + '</div>' +
+      '</div>' +
+      '<div class="mv-grid">' + (list.length ? list.map(function (c) {
+        var feed = c.photo
+          ? '<img class="mv-img" src="' + c.photo + '" alt="' + c.id + '">'
+          : '<div class="mv-bg"></div><div class="mv-grid2"></div><div class="mv-scan"></div><div class="mv-lens"></div>';
+        var det = '';
+        if (c.detect) {
+          det = '<div class="mv-detect" style="left:24%;top:28%;width:44%;height:42%"><span class="mv-detect-t">' + c.detect.label + ' ' + c.detect.score + '</span></div>';
+        }
+        return '<article class="mv-card" data-cam="' + c.id + '">' +
+          '<div class="mv-video">' + feed +
+            '<span class="mv-tag">' + c.id + ' · ' + c.zone + '</span>' +
+            '<span class="mv-rec' + (c.online ? '' : ' off') + '"><i class="d"></i>' + (c.online ? 'REC' : '离线') + '</span>' +
+            det +
+            '<span class="mv-time"><i>鹅舍' + c.houseCode + '</i><i>' + now.slice(11) + '</i></span>' +
+          '</div>' +
+          '<div class="mv-meta"><b>鹅舍' + c.houseCode + '</b><span class="z">' + (c.batch || '') + ' · ' + c.res + ' · ' + c.fps + 'fps</span>' +
+          (c.detect ? '<span class="badge badge-danger">AI 异常</span>' : '<span class="badge badge-ok">' + (c.online ? '正常' : '离线') + '</span>') + '</div>' +
+        '</article>';
+      }).join('') : '<div class="card empty">没有符合条件的监控通道</div>') + '</div>';
+    },
+    mount: function (root) {
+      var ms = st.mon;
+      var sel = $('#mvFarm', root);
+      if (sel) sel.onchange = function () { ms.farm = this.value; render(true); };
+      $$('#mvStatus .chip', root).forEach(function (b) {
+        b.onclick = function () { ms.status = b.dataset.s; render(true); };
+      });
+      $$('[data-cam]', root).forEach(function (card) {
+        card.onclick = function () { openCamPlayer(card.dataset.cam); };
+      });
+      var rb = $('[data-a="refresh"]', root);
+      if (rb) rb.onclick = function () { render(true); U.toast('通道状态已刷新', 'ok'); };
+    }
+  };
+  function openCamPlayer(id) {
+    var c = S.cams().filter(function (x) { return x.id === id; })[0];
+    if (!c) return;
+    var feed = c.photo
+      ? '<img class="mv-img" src="' + c.photo + '" style="width:100%;height:100%;object-fit:cover" alt="">'
+      : '<div class="mv-bg"></div><div class="mv-grid2"></div><div class="mv-scan"></div><div class="mv-lens"></div>';
+    var det = '';
+    if (c.detect) det = '<div class="mv-detect" style="left:24%;top:26%;width:46%;height:44%"><span class="mv-detect-t">' + c.detect.label + ' ' + c.detect.score + '</span></div>';
+    U.modal({
+      title: c.id + ' · 鹅舍' + c.houseCode,
+      size: 'lg',
+      body: '<div class="mv-player">' +
+        '<div class="mv-big">' + feed +
+          '<span class="mv-tag">' + c.zone + '</span>' +
+          '<span class="mv-rec' + (c.online ? '' : ' off') + '"><i class="d"></i>' + (c.online ? 'REC' : '离线') + '</span>' + det +
+          '<span class="mv-time"><i>鹅舍' + c.houseCode + ' · 批次 ' + (c.batch || '—') + '</i><i data-live="1"></i></span>' +
+        '</div>' +
+        '<div class="mv-info">' +
+          '<div class="dl"><b>通道编号</b><span>' + c.id + '</span></div>' +
+          '<div class="dl"><b>所属鹅舍</b><span>鹅舍' + c.houseCode + '（' + c.zone + '）</span></div>' +
+          '<div class="dl"><b>饲养员</b><span>' + (c.keeper || '—') + '</span></div>' +
+          '<div class="dl"><b>清晰度</b><span>' + c.res + ' / ' + c.fps + 'fps</span></div>' +
+          '<div class="dl"><b>运行状态</b><span>' + (c.online ? '<span class="badge badge-ok">在线</span>' : '<span class="badge badge-gray">离线</span>') + '</span></div>' +
+          '<div class="dl"><b>AI 识别</b><span>' + (c.detect ? '<span class="badge badge-danger">' + c.detect.label + ' ' + c.detect.score + '</span>' : '<span class="badge badge-ok">未发现异常</span>') + '</span></div>' +
+          '<div class="tip-box" style="margin-top:10px">AI 识别到异常时会自动生成预警工单并推送给饲养员，请及时到现场复核。</div>' +
+        '</div></div>',
+      actions: [
+        { text: '抓拍', onClick: function (api) { U.toast('抓拍成功，已存入本场资料库', 'ok'); } },
+        { text: '回放', onClick: function () { U.toast('录像回放服务由场区 NVR 提供，请按日期检索', 'info', 3000); } },
+        { text: '关闭', primary: true }
+      ]
+    });
+  }
+
+  /* ================= 页面：设备管理 ================= */
+  PAGES.devices = {
+    title: '设备管理', sub: '摄像头、传感器与边缘网关统一运维',
+    act: function () { return '<button class="btn btn-line btn-sm" data-a="csv">' + U.icon('download') + '导出台账</button>'; },
+    html: function () {
+      var ds = st.dev || (st.dev = { type: '', status: '全部' });
+      var all = S.devices();
+      var types = [];
+      all.forEach(function (x) { if (types.indexOf(x.type) < 0) types.push(x.type); });
+      var list = all.filter(function (x) {
+        if (ds.type && x.type !== ds.type) return false;
+        if (ds.status === '在线' && !x.online) return false;
+        if (ds.status === '离线' && x.online) return false;
+        return true;
+      });
+      var k = S.devStats();
+      return '<div class="stat-strip">' +
+        '<div class="stat"><span>设备总数</span><b>' + k.total + ' 台</b></div>' +
+        '<div class="stat"><span>在线</span><b style="color:var(--ok)">' + k.on + ' 台</b></div>' +
+        '<div class="stat"><span>离线</span><b style="color:var(--danger)">' + k.off + ' 台</b></div>' +
+        '<div class="stat"><span>低电量</span><b style="color:var(--warn)">' + k.low + ' 台</b></div>' +
+      '</div>' +
+      '<div class="mv-tool">' +
+        '<select class="input" id="dvType" style="width:auto;min-width:130px">' +
+          '<option value="">全部类型</option>' + types.map(function (t) {
+            return '<option value="' + t + '"' + (ds.type === t ? ' selected' : '') + '>' + t + '</option>';
+          }).join('') +
+        '</select>' +
+        '<div class="chips" id="dvStatus" style="margin:0">' +
+          '<span class="chip' + (ds.status === '全部' ? ' on' : '') + '" data-s="全部">全部</span>' +
+          '<span class="chip' + (ds.status === '在线' ? ' on' : '') + '" data-s="在线">在线</span>' +
+          '<span class="chip' + (ds.status === '离线' ? ' on' : '') + '" data-s="离线">离线</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="card">' + U.table({
+        columns: [
+          { title: '设备', render: function (r) { return '<span class="cell-strong">' + U.esc(r.name) + '</span><div style="font-size:12px;color:var(--ink-3)">' + r.id + '</div>'; } },
+          { title: '类型', render: function (r) { return '<span class="badge badge-brand">' + U.esc(r.type) + '</span>'; } },
+          { title: '安装位置', key: 'place' },
+          { title: '状态', align: 'center', render: function (r) { return r.online ? '<span class="badge badge-ok">在线</span>' : '<span class="badge badge-gray">离线</span>'; } },
+          { title: '电量', align: 'right', render: function (r) { return '<span class="num">' + r.power + '%</span>'; } },
+          { title: '信号', align: 'center', key: 'signal' },
+          { title: '固件', key: 'ver' },
+          { title: '上次维护', key: 'last' },
+          { title: '操作', align: 'center', render: function (r) {
+              return '<div class="row-act"><button class="btn btn-sm btn-ghost" data-dv="' + r.id + '">详情</button>' +
+                (r.online ? '<button class="btn btn-sm btn-ghost" data-rb="' + r.id + '">重启</button>' : '') + '</div>';
+            } }
+        ],
+        rows: list, empty: '没有符合条件的设备'
+      }) + '</div>';
+    },
+    mount: function (root) {
+      var ds = st.dev;
+      var sel = $('#dvType', root);
+      if (sel) sel.onchange = function () { ds.type = this.value; render(true); };
+      $$('#dvStatus .chip', root).forEach(function (b) {
+        b.onclick = function () { ds.status = b.dataset.s; render(true); };
+      });
+      $('[data-a="csv"]', root).onclick = function () {
+        U.csv('设备台账_' + S.util.dstr(new Date()) + '.csv',
+          ['设备', '编号', '类型', '位置', '状态', '电量', '信号', '固件', '上次维护'],
+          S.devices().map(function (x) { return [x.name, x.id, x.type, x.place, x.online ? '在线' : '离线', x.power + '%', x.signal, x.ver, x.last]; }));
+      };
+      $$('[data-dv]', root).forEach(function (b) {
+        b.onclick = function () {
+          var d = S.devices().filter(function (x) { return x.id === b.dataset.dv; })[0];
+          if (!d) return;
+          U.drawer({
+            title: d.name + ' · ' + d.id,
+            rows: [
+              ['设备类型', d.type], ['安装位置', d.place],
+              ['运行状态', d.online ? '<span class="badge badge-ok">在线</span>' : '<span class="badge badge-gray">离线</span>', 1],
+              ['电量', d.power + '%'], ['信号强度', d.signal],
+              ['固件版本', d.ver], ['上次维护', d.last]
+            ],
+            actions: [
+              { text: d.online ? '远程重启' : '设备离线', onClick: function (api) {
+                  api.close();
+                  U.toast('重启指令已下发，预计 30 秒内恢复', 'ok', 3000);
+                } },
+              { text: '切换上线/离线', kind: 'danger', onClick: function (api) {
+                  S.setDev(d.id, !d.online);
+                  api.close();
+                  U.toast('设备状态已更新', 'ok');
+                } },
+              { text: '关闭', primary: true }
+            ]
+          });
+        };
+      });
+      $$('[data-rb]', root).forEach(function (b) {
+        b.onclick = function () { U.toast('重启指令已下发，预计 30 秒内恢复', 'ok', 3000); };
+      });
+    }
+  };
+
+/* ================= 页面：鹅场管理 ================= */
   PAGES.farms = {
     title:'鹅场管理', sub:'鹅场档案、鹅舍台账与批次信息',
     act:function(){
@@ -923,7 +1124,7 @@
                     (u.id === me.uid ? '' : '<button class="btn btn-sm btn-danger" data-du="' + u.id + '">' + icon('trash') + '</button>') + '</div>'; } }
             ], rows:d().users, empty:'暂无账号'
           }) +
-          '<div class="tip-box" style="margin-top:14px">演示环境的账号与密码保存在浏览器本地，仅用于界面演示；真实上线必须改成后端接口 + 加密存储。</div>' +
+          '<div class="tip-box" style="margin-top:14px">当前部署形态下账号与密码存储于本机浏览器缓存；正式服务将切换为服务端加密存储与接口鉴权。</div>' +
           '</section>';
       }
       if (s.tab === 'ui'){
@@ -957,11 +1158,11 @@
             '<button class="btn btn-line" data-a="impJson">' + icon('copy') + '导入数据</button>' +
             '<input type="file" id="impFile" accept=".json" hidden>' +
           '</div>' +
-          '<div class="tip-box" style="margin-top:16px">重置会清空你新增的鹅舍、死淘与预警，恢复到初始演示数据。</div>' +
-          '<button class="btn btn-danger" style="margin-top:14px" data-a="reset">' + icon('refresh') + '重置演示数据</button>' +
+          '<div class="tip-box" style="margin-top:16px">重置将清空新增记录，恢复出厂初始数据，操作前请先导出备份。</div>' +
+          '<button class="btn btn-danger" style="margin-top:14px" data-a="reset">' + icon('refresh') + '重置数据</button>' +
         '</section>' +
         '<section class="card"><div class="card-hd"><h3>系统信息</h3></div>' +
-          '<div class="dl"><b>系统版本</b><span>寒羽智瞳 v1.0.0（纯前端演示版）</span></div>' +
+          '<div class="dl"><b>系统版本</b><span>寒羽智瞳 v1.0.0</span></div>' +
           '<div class="dl"><b>数据初始化</b><span>' + esc(d().meta.createdAt) + '</span></div>' +
           '<div class="dl"><b>期初存栏</b><span>' + F.num(d().meta.openingStock) + ' 只</span></div>' +
           '<div class="dl"><b>鹅场 / 鹅舍</b><span>' + d().farms.length + ' 个 / ' + d().houses.length + ' 栋</span></div>' +
@@ -1032,7 +1233,7 @@
       if (rst) rst.onclick = function(){
         if (!guard('admin')) return;
         U.confirm('重置后所有新增数据都会丢失，确定继续？').then(function(ok){
-          if (ok){ S.reset(); U.toast('已恢复初始演示数据','ok'); render(); }
+          if (ok){ S.reset(); U.toast('已恢复初始数据','ok'); render(); }
         });
       };
     }
@@ -1093,14 +1294,14 @@
     st.page = k; render();
   }
   function render(keep){
-    var view = $('#view'), sc = view.scrollTop, p = PAGES[st.page];
+    var view = $('#view'), sc = view.scrollTop, p = PAGES[st.page] || PAGES.overview;
+    paintNav(); paintUser();
     view.innerHTML =
       '<div class="page-hd"><div><h2>' + p.title + '</h2><p>' + p.sub + '</p></div>' +
       '<div class="page-act">' + (p.act ? p.act() : '') + '</div></div>' + p.html();
-    if (p.mount) p.mount(view);
-    view.scrollTop = keep ? sc : 0;
-    paintNav(); paintUser();
     document.title = p.title + ' · 寒羽智瞳';
+    if (p.mount) requestAnimationFrame(function(){ p.mount(view); });
+    view.scrollTop = keep ? sc : 0;
   }
 
   /* 顶栏交互 */
@@ -1138,35 +1339,36 @@
   };
   $('#btnUser').onclick = function(){
     U.popover(this,
-      '<div class="pop-hd"><span>' + esc(me.name) + ' · ' + esc(me.role) + '</span></div>' +
-      '<button class="pop-item" data-p="me">' + icon('user') + '个人信息</button>' +
-      '<button class="pop-item" data-p="set">' + icon('gear') + '系统设置</button>' +
-      '<button class="pop-item" data-p="theme">' + icon(d().settings.theme==='dark'?'sun':'moon') + '切换深色 / 浅色</button>' +
-      '<button class="pop-item" data-p="portal">' + icon('home') + '返回门户首页</button>' +
-      '<div class="pop-sep"></div>' +
-      '<button class="pop-item" data-p="out" style="color:var(--danger)">' + icon('logout') + '退出登录</button>',
+      '<div class="up-hd"><span class="avatar">' + esc((me.name||'羽').slice(0,1)) + '</span>' +
+        '<div><b>' + esc(me.name) + '</b><span>' + esc(me.role) + ' · ' + esc(me.username) + '</span></div></div>' +
+      '<button class="up-item" data-p="me">' + icon('user') + '个人信息</button>' +
+      '<button class="up-item" data-p="theme">' + icon(d().settings.theme==='dark'?'sun':'moon') + '切换深色 / 浅色</button>' +
+      '<button class="up-item" data-p="portal">' + icon('home') + '返回门户首页</button>' +
+      '<button class="up-item" data-p="set">' + icon('gear') + '系统设置</button>' +
+      '<div class="up-sep"></div>' +
+      '<button class="up-item danger" data-p="out">' + icon('logout') + '退出登录</button>',
       function(pop, close){
         $$('[data-p]', pop).forEach(function(b){
           b.onclick = function(){
             close();
             var k = b.dataset.p;
-            if (k === 'me') U.modal({ title:'个人信息',
-              body:'<div class="dl"><b>姓名</b><span>' + esc(me.name) + '</span></div>' +
-                   '<div class="dl"><b>账号</b><span>' + esc(me.username) + '</span></div>' +
-                   '<div class="dl"><b>角色</b><span>' + esc(me.role) + '</span></div>' +
-                   '<div class="dl"><b>登录时间</b><span>' + esc(me.at) + '</span></div>' +
-                   '<div class="dl"><b>权限说明</b><span>' + (me.role==='访客' ? '只读，不能修改数据' :
-                     me.role==='超级管理员' ? '全部功能，含账号与数据管理' : '可录入与处理业务数据') + '</span></div>',
-              actions:[{ text:'关闭', primary:true }] });
+            if (k === 'me') U.modal({ title: '个人信息',
+              body: '<div class="dl"><b>姓名</b><span>' + esc(me.name) + '</span></div>' +
+                    '<div class="dl"><b>账号</b><span>' + esc(me.username) + '</span></div>' +
+                    '<div class="dl"><b>角色</b><span>' + esc(me.role) + '</span></div>' +
+                    '<div class="dl"><b>所属</b><span>' + esc((d().farms[0] || {}).name || '寒羽智瞳') + '</span></div>' +
+                    '<div class="dl"><b>登录时间</b><span>' + esc(me.at) + '</span></div>' +
+                    '<div class="dl"><b>权限说明</b><span>' + (me.role === '超级管理员' ? '全部功能，含账号与数据管理' : '可录入与处理业务数据') + '</span></div>',
+              actions: [{ text: '关闭', primary: true }] });
             else if (k === 'set') go('settings');
-            else if (k === 'theme'){ S.setSettings({ theme: d().settings.theme==='dark'?'light':'dark' }); applyTheme(); render(true); }
+            else if (k === 'theme') { S.setSettings({ theme: d().settings.theme === 'dark' ? 'light' : 'dark' }); applyTheme(); render(true); }
             else if (k === 'portal') location.href = 'index.html';
-            else if (k === 'out') U.confirm('确定退出登录？').then(function(ok){
-              if (ok){ S.logout(); location.replace('index.html'); }
+            else if (k === 'out') U.confirm('确定退出登录？').then(function (ok) {
+              if (ok) { S.logout(); location.replace('index.html'); }
             });
           };
         });
-      });
+      }, { width: 272 });
   };
   var live = $('#btnLive');
   live.onclick = function(){
@@ -1205,6 +1407,9 @@
   /* ================= 启动 ================= */
   applyTheme(); paintLive();
   window.addEventListener('hashchange', route);
-  route();
-  U.toast('欢迎回来，' + me.name + '（' + me.role + '）', 'ok', 2000);
+  paintNav(); paintUser();
+  setTimeout(function () { route(); }, 30);
+  setTimeout(function () {
+    U.toast('欢迎回来，' + me.name + '（' + me.role + '）', 'ok', 1600);
+  }, 500);
 })(window);

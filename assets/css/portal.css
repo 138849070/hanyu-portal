@@ -150,3 +150,46 @@
 .login-row { display: flex; align-items: center; justify-content: space-between; margin: 4px 0 14px; }
 .login-row .switch { font-size: 13px; color: var(--ink-2); }
 .login-box .form-tip { font-size: 12px; color: var(--ink-3); line-height: 1.7; }
+
+
+/* ===== 新登录框 ===== */
+.lg { padding: 6px 2px 2px; text-align: center; }
+.lg-logo {
+  width: 64px; height: 64px; margin: 4px auto 14px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #4b1fa8, #8b5cf6);
+  color: #fff; font-size: 30px; font-weight: 800;
+  display: grid; place-items: center;
+  box-shadow: 0 12px 28px rgba(109, 60, 224, .35);
+}
+.lg-title { font-size: 22px; font-weight: 800; letter-spacing: 1px; }
+.lg-sub { font-size: 12.5px; color: var(--ink-3); margin: 6px 0 18px; }
+.lg-body { text-align: left; }
+.lg-lb { display: block; font-size: 12.5px; font-weight: 700; color: var(--ink-2); margin: 12px 0 6px; }
+.lg-ipt { height: 44px; }
+.lg-pwd { position: relative; }
+.lg-pwd .input { height: 44px; padding-right: 42px; }
+.lg-eye {
+  position: absolute; right: 4px; top: 4px;
+  width: 36px; height: 36px; border: 0; border-radius: 8px;
+  background: transparent; cursor: pointer; font-size: 15px;
+}
+.lg-eye:hover { background: var(--line-2); }
+.lg-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin: 14px 0 4px; font-size: 12.5px;
+}
+.lg-row .switch span { font-size: 12.5px; color: var(--ink-2); }
+.lg-link { color: var(--brand); font-weight: 600; cursor: pointer; }
+.lg-link:hover { text-decoration: underline; }
+.lg-err {
+  display: none;
+  margin-top: 10px; padding: 8px 12px;
+  background: var(--danger-bg); color: var(--danger);
+  border-radius: 8px; font-size: 12.5px;
+}
+.lg-btn { height: 46px; margin-top: 14px; font-size: 15px; letter-spacing: 6px; }
+.lg-foot {
+  text-align: center; font-size: 12px; color: var(--ink-3);
+  margin: 16px 0 2px;
+}
