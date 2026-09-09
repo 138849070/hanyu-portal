@@ -33,7 +33,7 @@
 
   /* ---------------- 字典 ---------------- */
   var ALERT_TYPES = ['温度异常', '湿度异常', '氨气浓度高', '通风异常', '其他'];
-  var TYPE_COLORS = { '温度异常': '#176B56', '湿度异常': '#34d399', '氨气浓度高': '#38bdf8', '通风异常': '#fbbf24', '其他': '#fb7185' };
+  var TYPE_COLORS = { '温度异常': '#2563EB', '湿度异常': '#34d399', '氨气浓度高': '#38bdf8', '通风异常': '#fbbf24', '其他': '#fb7185' };
   var CAUSES = ['冻伤应激', '呼吸道疾病', '肠道疾病', '营养代谢病', '踩踏挤压', '弱雏淘汰', '其他'];
   var DISPOSALS = ['无害化处理', '深埋', '焚烧', '送检化验'];
   var BREEDS = ['霍尔多巴吉鹅', '朗德鹅', '莱茵鹅', '皖西白鹅'];
@@ -80,7 +80,7 @@
         platformName: '寒羽智瞳', platformSub: '寒区肉鹅健康管理平台',
         thresholds: JSON.parse(JSON.stringify(DEFAULT_TH)),
         notify: { popup: true, sms: false, email: true, daily: true },
-        theme: 'light', accent: 'green', sim: true, pageSize: 10
+        theme: 'light', accent: '#2563EB', sim: true, pageSize: 10
       },
       users: [
         { id: 'U1', username: 'liying', password: '123456', name: '李莹', role: '超级管理员', phone: '13800002013', status: '启用', last: tstr(now) },

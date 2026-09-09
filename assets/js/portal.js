@@ -30,18 +30,27 @@
     });
   });
   var themeBtn = $('#themeBtn'), themeIco = $('#themeIco');
+  function persistTheme(t) {
+    try { localStorage.setItem('hy_portal_theme', t); } catch (e) {}
+    try { var db = S.db(); if (db && db.settings) { db.settings.theme = t; S.save(); } } catch (e) {}
+  }
   function paintThemeBtn() {
     themeIco.innerHTML = U.icon(document.documentElement.getAttribute('data-theme') === 'dark' ? 'sun' : 'moon');
   }
   themeBtn.addEventListener('click', function () {
     var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
-    try { localStorage.setItem('hy_portal_theme', next); } catch (e) {}
+    persistTheme(next);
     paintThemeBtn();
   });
   (function () {
-    var saved = 'light';
-    try { saved = localStorage.getItem('hy_portal_theme') || 'light'; } catch (e) {}
+    var saved = null;
+    try { saved = localStorage.getItem('hy_portal_theme'); } catch (e) {}
+    if (!saved) {
+      try { var st = S.db().settings || {}; saved = st.theme || 'light'; } catch (e) { saved = 'light'; }
+    }
+    if (!saved) saved = 'light';
+    persistTheme(saved);
     document.documentElement.setAttribute('data-theme', saved);
     paintThemeBtn();
   })();
@@ -71,7 +80,7 @@
   C.combo($('#pChart'), {
     labels: t30.labels, height: 130, lUnit: '%', xTickEvery: 10,
     xFmt: function (d) { return d.slice(5); },
-    series: [{ name: '累计死淘率', type: 'line', color: '#7a5af8', data: t30.cum, unit: '%' }]
+    series: [{ name: '累计死淘率', type: 'line', color: '#2563EB', data: t30.cum, unit: '%' }]
   });
   C.donut($('#pDonut'), { items: S.alertTypeShare(30).items, height: 168, unit: ' 起' });
   var k0 = S.kpi();

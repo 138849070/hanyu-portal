@@ -37,7 +37,7 @@
     { key: 'settings', name: '系统设置', ico: 'gear' }
   ];
 
-  var ACCENTS = [['#176B56', '#3E9B7E'], ['#2e90fa', '#7cc4fd'], ['#12b76a', '#6ce9a6'], ['#f79009', '#fdb022'], ['#f04438', '#fda29b']];
+  var ACCENTS = [['#2563EB', '#60A5FA'], ['#4F46E5', '#818CF8'], ['#f79009', '#fdb022'], ['#f04438', '#fda29b']];
 
   var st = {
     page: 'overview',
@@ -61,18 +61,23 @@
       '<span class="kpi-s">' + (o.sub || '') + '</span></span></button>';
   }
   var ST_COLORS = {
-    '待处理': ['#f04438', '#feecea'], '已处理': ['#12b76a', '#e7f8ef'], '已忽略': ['#918fad', '#f1f0f7'],
-    '在养': ['#12b76a', '#e7f8ef'], '空舍': ['#918fad', '#f1f0f7'], '消毒中': ['#f79009', '#fdf3e3'],
-    '已上链': ['#12b76a', '#e7f8ef'], '待确认': ['#f79009', '#fdf3e3'],
-    '启用': ['#12b76a', '#e7f8ef'], '禁用': ['#918fad', '#f1f0f7']
+    '待处理': ['var(--danger-text,var(--danger))', 'var(--danger-bg)'], '已处理': ['var(--ok-text,var(--ok))', 'var(--ok-bg)'], '已忽略': ['var(--ink-2)', 'var(--line-2)'],
+    '在养': ['var(--ok-text,var(--ok))', 'var(--ok-bg)'], '空舍': ['var(--ink-2)', 'var(--line-2)'], '消毒中': ['var(--warn-text,var(--warn))', 'var(--warn-bg)'],
+    '已上链': ['var(--ok-text,var(--ok))', 'var(--ok-bg)'], '待确认': ['var(--warn-text,var(--warn))', 'var(--warn-bg)'],
+    '启用': ['var(--ok-text,var(--ok))', 'var(--ok-bg)'], '禁用': ['var(--ink-2)', 'var(--line-2)']
   };
   function stBadge(s) {
-    var c = ST_COLORS[s] || ['#2e90fa', '#e9f2ff'];
+    var c = ST_COLORS[s] || ['var(--info-text,var(--info))', 'var(--info-bg)'];
     return '<span class="badge" style="background:' + c[1] + ';color:' + c[0] + '">' + esc(s) + '</span>';
   }
   function typeTag(t) {
-    var c = D.TYPE_COLORS[t] || '#176B56';
-    return '<span class="badge" style="background:' + c + '1f;color:' + c + '">' + esc(t) + '</span>';
+    var m = { '温度异常': ['var(--brand-soft)', 'var(--brand-ink)'],
+      '湿度异常': ['var(--ok-bg)', 'var(--ok-text,var(--ok))'],
+      '氨气浓度高': ['var(--info-bg)', 'var(--info-text,var(--info))'],
+      '通风异常': ['var(--warn-bg)', 'var(--warn-text,var(--warn))'],
+      '其他': ['var(--danger-bg)', 'var(--danger-text,var(--danger))'] };
+    var c = m[t] || ['var(--line-2)', 'var(--ink-2)'];
+    return '<span class="badge" style="background:' + c[0] + ';color:' + c[1] + '">' + esc(t) + '</span>';
   }
   function unitOf(t) {
     return t === '温度异常' ? '℃' : t === '湿度异常' ? '%RH' : t === '氨气浓度高' ? 'ppm' : t === '通风异常' ? 'm/s' : '';
@@ -88,7 +93,7 @@
     return os;
   }
   function badgesOf(role) {
-    return '<i class="badge" style="background:#f0ebff;color:#6d3ce0">' + esc(role) + '</i>';
+    return '<i class="badge" style="background:var(--brand-soft);color:var(--brand-ink)">' + esc(role) + '</i>';
   }
   function alertDrawer(a) {
     var h = S.houseByCode(a.houseCode) || {};
@@ -258,8 +263,8 @@
         '</div>';
       var row2 = '<div class="stat-strip">' +
         '<div class="stat"><span>监控通道</span><b>' + k.camTotal + ' 路</b></div>' +
-        '<div class="stat"><span>通道在线</span><b style="color:#12b76a">' + k.camOn + ' 路</b></div>' +
-        '<div class="stat"><span>AI 识别中</span><b style="color:#f79009">' + k.camAi + ' 路</b></div>' +
+        '<div class="stat"><span>通道在线</span><b style="color:var(--ok-text,var(--ok))">' + k.camOn + ' 路</b></div>' +
+        '<div class="stat"><span>AI 识别中</span><b style="color:var(--warn-text,var(--warn))">' + k.camAi + ' 路</b></div>' +
         '<div class="stat"><span>设备在线</span><b>' + k.devOn + ' / ' + k.devTotal + ' 台</b></div>' +
         '</div>';
       var chart = '<div class="grid g-2-1">' +
@@ -296,8 +301,8 @@
           labels: t.labels, height: 280, lUnit: '只', rUnit: '%',
           xFmt: function (s) { return s.slice(5); },
           series: [
-            { name: '日死淘数', type: 'bar', axis: 'l', color: '#34d399', data: t.daily, unit: ' 只' },
-            { name: '累计死淘率', type: 'line', axis: 'r', color: '#176B56', data: t.cum, unit: '%' }
+            { name: '日死淘数', type: 'bar', axis: 'l', color: '#60A5FA', data: t.daily, unit: ' 只' },
+            { name: '累计死淘率', type: 'line', axis: 'r', color: '#2563EB', data: t.cum, unit: '%' }
           ]
         });
         C.donut($('#cShare', root), { items: S.alertTypeShare(st.shareDays).items, height: 280, title: '合计', unit: ' 起' });
@@ -348,9 +353,9 @@
       var now = F.tstr(new Date());
       return '<div class="stat-strip">' +
         '<div class="stat"><span>监控通道</span><b>' + cs.total + ' 路</b></div>' +
-        '<div class="stat"><span>在线</span><b style="color:#12b76a">' + cs.on + ' 路</b></div>' +
-        '<div class="stat"><span>离线</span><b style="color:#f04438">' + cs.off + ' 路</b></div>' +
-        '<div class="stat"><span>AI 识别</span><b style="color:#f79009">' + cs.ai + ' 路</b></div></div>' +
+        '<div class="stat"><span>在线</span><b style="color:var(--ok-text,var(--ok))">' + cs.on + ' 路</b></div>' +
+        '<div class="stat"><span>离线</span><b style="color:var(--danger-text,var(--danger))">' + cs.off + ' 路</b></div>' +
+        '<div class="stat"><span>AI 识别</span><b style="color:var(--warn-text,var(--warn))">' + cs.ai + ' 路</b></div></div>' +
         '<div class="mv-tool">' +
         '<select class="input" id="mvFarm" style="width:auto;min-width:170px">' +
         '<option value="">全部鹅场</option>' + S.farms().map(function (f) {
@@ -370,7 +375,7 @@
             '<span class="mv-time"><i>鹅舍' + c.houseCode + '</i><i>' + F.tstr(new Date()).slice(11) + '</i></span>' +
             '</div><div class="mv-meta"><b>鹅舍' + c.houseCode + '</b>' +
             '<span class="z">' + esc(c.batch || '') + ' · ' + c.res + ' · ' + c.fps + 'fps</span>' +
-            (c.detect ? '<span class="badge" style="background:#feecea;color:#f04438">AI 异常</span>' : '<span class="badge" style="background:#e7f8ef;color:#12b76a">' + (c.online ? '正常' : '离线') + '</span>') +
+            (c.detect ? '<span class="badge" style="background:var(--danger-bg);color:var(--danger-text,var(--danger))">AI 异常</span>' : '<span class="badge" style="background:var(--ok-bg);color:var(--ok-text,var(--ok))">' + (c.online ? '正常' : '离线') + '</span>') +
             '</div></article>';
         }).join('') : '<div class="card empty" style="grid-column:1/-1">没有符合条件的监控通道</div>') + '</div>';
     },
@@ -408,7 +413,7 @@
         '<div class="dl"><b>饲养员</b><span>' + esc(c.keeper || '—') + '</span></div>' +
         '<div class="dl"><b>清晰度</b><span>' + c.res + ' / ' + c.fps + 'fps</span></div>' +
         '<div class="dl"><b>运行状态</b><span>' + (c.online ? stBadge('在养') : stBadge('空舍')) + '</span></div>' +
-        '<div class="dl"><b>AI 识别</b><span>' + (c.detect ? '<span class="badge" style="background:#feecea;color:#f04438">' + c.detect.label + ' ' + c.detect.score + '</span>' : '<span class="badge" style="background:#e7f8ef;color:#12b76a">未发现异常</span>') + '</span></div>' +
+        '<div class="dl"><b>AI 识别</b><span>' + (c.detect ? '<span class="badge" style="background:var(--danger-bg);color:var(--danger-text,var(--danger))">' + c.detect.label + ' ' + c.detect.score + '</span>' : '<span class="badge" style="background:var(--ok-bg);color:var(--ok-text,var(--ok))">未发现异常</span>') + '</span></div>' +
         '<div class="tip-box" style="margin-top:10px">AI 识别到异常时自动生成预警工单并推送给饲养员，请及时到现场复核。</div>' +
         '</div></div>',
       actions: [
@@ -550,7 +555,7 @@
             { title: '类型', render: function (r) { return typeTag(r.type); } },
             { title: '实测值', align: 'right', render: function (r) { return '<b>' + r.value + unitOf(r.type) + '</b>'; } },
             { title: '级别', align: 'center', render: function (r) {
-                var c = r.level === '高' ? ['#f04438', '#feecea'] : r.level === '中' ? ['#f79009', '#fdf3e3'] : ['#918fad', '#f1f0f7'];
+                var c = r.level === '高' ? ['var(--danger-text,var(--danger))', 'var(--danger-bg)'] : r.level === '中' ? ['var(--warn-text,var(--warn))', 'var(--warn-bg)'] : ['var(--ink-2)', 'var(--line-2)'];
                 return '<span class="badge" style="background:' + c[1] + ';color:' + c[0] + '">' + r.level + '级</span>';
               } },
             { title: '数量', align: 'right', render: function (r) { return r.count + ' 只'; } },
@@ -628,7 +633,7 @@
       }
       return '<div class="env-card' + (bad ? ' bad' : '') + '" data-env="' + h.code + '">' +
         '<div class="env-hd"><b>鹅舍' + h.code + '</b>' +
-        (bad ? '<span class="badge" style="background:#feecea;color:#f04438">越限</span>' : '<span class="badge" style="background:#e7f8ef;color:#12b76a">正常</span>') + '</div>' +
+        (bad ? '<span class="badge" style="background:var(--danger-bg);color:var(--danger-text,var(--danger))">越限</span>' : '<span class="badge" style="background:var(--ok-bg);color:var(--ok-text,var(--ok))">正常</span>') + '</div>' +
         '<div class="env-metrics">' +
         val(e.temp, '温度 ℃', badT) + val(e.hum, '湿度 %', badH) +
         val(e.nh3, '氨气 ppm', badN) + val(e.wind, '风速 m/s', badW) +
@@ -677,7 +682,7 @@
             { title: '日期', key: 'date' },
             { title: '鹅舍', render: function (r) { return '<b>鹅舍' + esc(r.houseCode) + '</b>'; } },
             { title: '数量(只)', align: 'right', render: function (r) { return '<b>' + r.count + '</b>'; } },
-            { title: '原因', render: function (r) { return '<span class="badge" style="background:#f1f0f7;color:#585676">' + esc(r.cause) + '</span>'; } },
+            { title: '原因', render: function (r) { return '<span class="badge" style="background:var(--line-2);color:var(--ink-2)">' + esc(r.cause) + '</span>'; } },
             { title: '处置方式', key: 'disposal' },
             { title: '上报人', key: 'reporter' },
             { title: '备注', render: function (r) { return esc(r.remark || '—'); } },
@@ -698,7 +703,7 @@
           labels: t.labels, height: 250, lUnit: '只', rUnit: '%', xFmt: function (x) { return x.slice(5); },
           series: [
             { name: '日死淘数', type: 'bar', axis: 'l', color: '#fb7185', data: t.daily, unit: ' 只' },
-            { name: '累计死淘率', type: 'line', axis: 'r', color: '#176B56', data: t.cum, unit: '%' }
+            { name: '累计死淘率', type: 'line', axis: 'r', color: '#2563EB', data: t.cum, unit: '%' }
           ]
         });
         var cause = {};
@@ -762,7 +767,7 @@
       return '<div class="stat-strip">' +
         '<div class="stat"><span>存证总数</span><b>' + F.num(k.evidence) + ' 条</b></div>' +
         '<div class="stat"><span>本月新增</span><b>' + k.evidenceMonth + ' 条</b></div>' +
-        '<div class="stat"><span>待确认</span><b style="color:#f79009">' + pend + ' 条</b></div>' +
+        '<div class="stat"><span>待确认</span><b style="color:var(--warn-text,var(--warn))">' + pend + ' 条</b></div>' +
         '<div class="stat"><span>涉及只数</span><b>' + F.num(totalCnt) + ' 只</b></div></div>' +
         '<div class="toolbar"><div class="field grow"><label>搜索</label><input id="eq" value="' + esc(s.q) + '" placeholder="存证号 / 保单号 / 鹅舍"></div>' +
         '<div class="field"><label>类型</label>' + selHtml('et', [{ value: '', text: '全部类型' }, { value: '死淘存证', text: '死淘存证' }, { value: '环境存证', text: '环境存证' }, { value: '理赔存证', text: '理赔存证' }], s.type) + '</div>' +
@@ -772,7 +777,7 @@
           columns: [
             { title: '存证号', render: function (r) { return '<b>' + esc(r.no) + '</b>'; } },
             { title: '生成时间', key: 'ts' },
-            { title: '类型', render: function (r) { return '<span class="badge" style="background:#e9f2ff;color:#2e90fa">' + esc(r.type) + '</span>'; } },
+            { title: '类型', render: function (r) { return '<span class="badge" style="background:var(--info-bg);color:var(--info-text,var(--info))">' + esc(r.type) + '</span>'; } },
             { title: '鹅舍', render: function (r) { return '鹅舍' + esc(r.houseCode); } },
             { title: '只数', align: 'right', render: function (r) { return '<b>' + r.count + '</b>'; } },
             { title: '保单号', key: 'policy' },
@@ -850,9 +855,9 @@
       var k = S.devStats();
       return '<div class="stat-strip">' +
         '<div class="stat"><span>设备总数</span><b>' + k.total + ' 台</b></div>' +
-        '<div class="stat"><span>在线</span><b style="color:#12b76a">' + k.on + ' 台</b></div>' +
-        '<div class="stat"><span>离线</span><b style="color:#f04438">' + k.off + ' 台</b></div>' +
-        '<div class="stat"><span>低电量</span><b style="color:#f79009">' + k.low + ' 台</b></div></div>' +
+        '<div class="stat"><span>在线</span><b style="color:var(--ok-text,var(--ok))">' + k.on + ' 台</b></div>' +
+        '<div class="stat"><span>离线</span><b style="color:var(--danger-text,var(--danger))">' + k.off + ' 台</b></div>' +
+        '<div class="stat"><span>低电量</span><b style="color:var(--warn-text,var(--warn))">' + k.low + ' 台</b></div></div>' +
         '<div class="mv-tool"><select class="input" id="dvType" style="width:auto;min-width:130px">' +
         '<option value="">全部类型</option>' + types.map(function (t) {
           return '<option value="' + t + '"' + (ds.type === t ? ' selected' : '') + '>' + t + '</option>';
@@ -866,7 +871,7 @@
             { title: '设备', render: function (r) { return '<b>' + esc(r.name) + '</b><div style="font-size:12px;color:var(--ink-3)">' + r.id + '</div>'; } },
             { title: '类型', render: function (r) { return badgesOf(r.type); } },
             { title: '安装位置', key: 'place' },
-            { title: '状态', align: 'center', render: function (r) { return r.online ? '<span class="badge" style="background:#e7f8ef;color:#12b76a">在线</span>' : '<span class="badge" style="background:#f1f0f7;color:#918fad">离线</span>'; } },
+            { title: '状态', align: 'center', render: function (r) { return r.online ? '<span class="badge" style="background:var(--ok-bg);color:var(--ok-text,var(--ok))">在线</span>' : '<span class="badge" style="background:var(--line-2);color:var(--ink-2)">离线</span>'; } },
             { title: '电量', align: 'right', render: function (r) { return '<b>' + r.power + '%</b>'; } },
             { title: '信号', align: 'center', key: 'signal' },
             { title: '固件', key: 'ver' },
@@ -963,7 +968,7 @@
       try {
         C.combo($('#rTrend', root), {
           labels: r.labels, height: 260, lUnit: '只', xFmt: function (x) { return x.slice(5); },
-          series: [{ name: '日死淘数', type: 'bar', color: '#176B56', data: r.daily, unit: ' 只' },
+          series: [{ name: '日死淘数', type: 'bar', color: '#60A5FA', data: r.daily, unit: ' 只' },
                    { name: '7日移动平均', type: 'line', color: '#f79009', data: r.ma, unit: ' 只' }]
         });
         C.donut($('#rShare', root), { items: r.share, height: 260, title: '合计', unit: ' 起' });
@@ -1158,7 +1163,11 @@
         S.save(); paintLive(); U.toast('通知设置已保存', 'ok');
       };
       $$('[data-theme]', root).forEach(function (b) {
-        b.onclick = function () { db.settings.theme = b.dataset.theme; S.save(); applyTheme(); render(true); };
+        b.onclick = function () {
+          db.settings.theme = b.dataset.theme; S.save();
+          try { localStorage.setItem('hy_portal_theme', b.dataset.theme); } catch (e) {}
+          applyTheme(); render(true);
+        };
       });
       $$('[data-accent]', root).forEach(function (b) {
         b.onclick = function () { db.settings.accent = b.dataset.accent; S.save(); applyTheme(); render(true); };
@@ -1228,7 +1237,7 @@
     nav.innerHTML = NAV.map(function (n) {
       var b = n.badge ? n.badge() : 0;
       return '<a class="' + (st.page === n.key ? 'on' : '') + '" data-nav="' + n.key + '" title="' + n.name + '">' +
-        icon(n.ico) + '<span>' + n.name + '</span>' +
+        '<span class="ico">' + icon(n.ico) + '</span><span>' + n.name + '</span>' +
         (b ? '<b class="dot">' + (b > 99 ? '99+' : b) + '</b>' : '') + '</a>';
     }).join('');
     $$('[data-nav]').forEach(function (a) {
@@ -1249,6 +1258,7 @@
   function applyTheme() {
     var sm = S.db().settings;
     document.documentElement.setAttribute('data-theme', sm.theme || 'light');
+    if (!ACCENTS.some(function (a) { return a[0] === sm.accent; })) sm.accent = ACCENTS[0][0];
     var pair = ACCENTS.filter(function (a) { return a[0] === sm.accent; })[0] || ACCENTS[0];
     document.documentElement.style.setProperty('--brand', pair[0]);
     document.documentElement.style.setProperty('--brand-2', pair[1]);
@@ -1278,8 +1288,8 @@
         '<div class="page-act">' + (p.act ? p.act() : '') + '</div></div>' + p.html();
     } catch (e) {
       console.error('页面渲染失败', e);
-      html = '<div class="card" style="margin-top:20px;border-left:4px solid #f04438"><h3>页面加载失败</h3>' +
-        '<p class="mini-note" style="margin-top:6px;color:#f04438">' + esc(e.message) + '</p>' +
+      html = '<div class="card" style="margin-top:20px;border-left:4px solid var(--danger-text,var(--danger))"><h3>页面加载失败</h3>' +
+        '<p class="mini-note" style="margin-top:6px;color:var(--danger-text,var(--danger))">' + esc(e.message) + '</p>' +
         '<p class="mini-note" style="margin-top:10px">请按 F12 打开控制台，把红色报错发给开发人员。</p></div>';
     }
     view.innerHTML = html;
@@ -1299,12 +1309,19 @@
   var sideMask = $('#sideMask');
   if (sideMask) sideMask.onclick = closeSide;
 
+  var btnCollapse = $('#btnCollapse');
+  if (btnCollapse) btnCollapse.onclick = function () {
+    var mini = document.body.classList.toggle('nav-mini');
+    btnCollapse.textContent = mini ? '»' : '«';
+    btnCollapse.setAttribute('aria-label', mini ? '展开侧栏' : '收起侧栏');
+  };
+
   var live = $('#btnLive');
   function paintLive() {
     var on = S.db().settings.sim;
     if (!live) return;
     live.classList.toggle('off', !on);
-    var t = live.querySelector('span');
+    var t = live.querySelector('.live-txt');
     if (t) t.textContent = on ? '实时监测中' : '监测已暂停';
   }
   if (live) live.onclick = function () {
@@ -1376,7 +1393,9 @@
             else if (k === 'theme') {
               var sm = S.db().settings;
               sm.theme = sm.theme === 'dark' ? 'light' : 'dark';
-              S.save(); applyTheme(); render(true);
+              S.save();
+              try { localStorage.setItem('hy_portal_theme', sm.theme); } catch (e) {}
+              applyTheme(); render(true);
             } else if (k === 'portal') location.href = 'index.html';
             else if (k === 'out') {
               U.confirm('确定退出登录？').then(function (ok) { if (ok) { S.logout(); location.replace('index.html'); } });
