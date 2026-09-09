@@ -72,7 +72,7 @@
   }
   function typeTag(t) {
     var m = { '温度异常': ['var(--brand-soft)', 'var(--brand-ink)'],
-      '湿度异常': ['var(--ok-bg)', 'var(--ok-text,var(--ok))'],
+      '湿度异常': ['var(--hum-bg)', 'var(--hum-ink)'],
       '氨气浓度高': ['var(--info-bg)', 'var(--info-text,var(--info))'],
       '通风异常': ['var(--warn-bg)', 'var(--warn-text,var(--warn))'],
       '其他': ['var(--danger-bg)', 'var(--danger-text,var(--danger))'] };
