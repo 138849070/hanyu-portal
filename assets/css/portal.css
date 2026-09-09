@@ -84,7 +84,7 @@
 /* 场景 */
 .scenes{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
 .s-card{border-radius:var(--r);padding:28px 24px;color:#fff;box-shadow:var(--sh);min-height:210px;display:flex;flex-direction:column;justify-content:flex-end}
-.s-card:nth-child(1){background:linear-gradient(150deg,#7a5af8,#4b30c4)}
+.s-card:nth-child(1){background:linear-gradient(150deg,#176B56,#0E5A44)}
 .s-card:nth-child(2){background:linear-gradient(150deg,#0ea5e9,#0c4a6e)}
 .s-card:nth-child(3){background:linear-gradient(150deg,#10b981,#065f46)}
 .s-card h3{font-size:19px;margin-bottom:8px}

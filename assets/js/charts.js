@@ -248,7 +248,7 @@
     });
     box.innerHTML = '<svg class="spark" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">' +
       '<polyline points="'+pts.map(function(p){return p[0]+','+p[1];}).join(' ')+
-      '" fill="none" stroke="'+(color||'#7a5af8')+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      '" fill="none" stroke="'+(color||'#176B56')+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   }
 
   global.HY = global.HY || {};

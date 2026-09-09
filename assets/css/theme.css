@@ -1,21 +1,21 @@
 /* ================= 寒羽智瞳 · 设计变量 + 通用组件 ================= */
 *,*::before,*::after{box-sizing:border-box}
 :root{
-  --brand:#7a5af8; --brand-2:#a78bfa; --brand-soft:#efeaff; --brand-ink:#4b30c4;
-  --bg:#f4f3fb; --card:#fff; --card-2:#faf9ff; --side-1:#31226b; --side-2:#170e36;
-  --ink:#1b1a33; --ink-2:#585675; --ink-3:#918fad; --line:#ebe9f7; --line-2:#f3f1fb;
+  --brand:#176B56; --brand-2:#3E9B7E; --brand-soft:#E2F2E9; --brand-ink:#0E5A44;
+  --bg:#F4F7F5; --card:#fff; --card-2:#F8FBF9; --side-1:#0E3B2C; --side-2:#06221A;
+  --ink:#1A2B24; --ink-2:#5B6E65; --ink-3:#92A49B; --line:#E1EAE5; --line-2:#EFF4F1;
   --ok:#12b76a; --ok-bg:#e7f8ef; --warn:#f79009; --warn-bg:#fef3e3;
   --danger:#f04438; --danger-bg:#feecea; --info:#2e90fa; --info-bg:#e9f2ff;
   --r:16px; --r-sm:10px; --r-xs:8px;
-  --sh:0 8px 26px rgba(56,38,120,.07); --sh-lg:0 24px 64px rgba(30,18,70,.22);
+  --sh:0 8px 26px rgba(20,60,44,.07); --sh-lg:0 24px 64px rgba(10,38,28,.22);
   --ff:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei","Hiragino Sans GB",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
 }
 [data-accent=blue]  {--brand:#2e90fa;--brand-2:#7cc4ff;--brand-soft:#e6f1ff;--brand-ink:#1461b8;--side-1:#123a6b;--side-2:#07203f}
-[data-accent=green] {--brand:#12b76a;--brand-2:#6ee7b7;--brand-soft:#e4f8ee;--brand-ink:#08794a;--side-1:#0f4a34;--side-2:#052419}
+[data-accent=green] {--brand:#176B56;--brand-2:#3E9B7E;--brand-soft:#E2F2E9;--brand-ink:#0E5A44;--side-1:#0E3B2C;--side-2:#06221A}
 [data-accent=orange]{--brand:#f2820c;--brand-2:#fdba74;--brand-soft:#fff1e0;--brand-ink:#a5510a;--side-1:#5c3411;--side-2:#2c1706}
 [data-theme=dark]{
-  --bg:#101024; --card:#191933; --card-2:#1f1f3d; --ink:#eceaff; --ink-2:#a6a3c8; --ink-3:#7b789c;
-  --line:#2a2a4d; --line-2:#232342; --brand-soft:#241f4d; --sh:0 8px 26px rgba(0,0,0,.35);
+  --bg:#101813; --card:#18231E; --card-2:#1F2D26; --ink:#E6F1EC; --ink-2:#A5BAB0; --ink-3:#7E9589;
+  --line:#2A3B33; --line-2:#23322C; --brand-soft:#1B3329; --sh:0 8px 26px rgba(0,0,0,.35);
   --ok-bg:#12331f; --warn-bg:#3a2a10; --danger-bg:#3a1917; --info-bg:#122740;
 }
 html,body{margin:0;padding:0}
@@ -31,8 +31,8 @@ code{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--brand-so
 .skip{position:absolute;left:-999px;top:8px;z-index:99;background:var(--brand);color:#fff;padding:8px 14px;border-radius:8px}
 .skip:focus{left:8px}
 ::-webkit-scrollbar{width:10px;height:10px}
-::-webkit-scrollbar-thumb{background:#cfcbe6;border-radius:10px;border:3px solid transparent;background-clip:content-box}
-[data-theme=dark] ::-webkit-scrollbar-thumb{background:#3a3a63;background-clip:content-box}
+::-webkit-scrollbar-thumb{background:#C4D6CB;border-radius:10px;border:3px solid transparent;background-clip:content-box}
+[data-theme=dark] ::-webkit-scrollbar-thumb{background:#3A4C43;background-clip:content-box}
 
 /* ---------- 按钮 ---------- */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:38px;padding:0 16px;border:1px solid transparent;
@@ -75,7 +75,7 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
 .form .field.col-2{grid-column:1/-1}
 .switch{display:inline-flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
 .switch input{position:absolute;opacity:0;width:0;height:0}
-.switch .track{width:42px;height:24px;border-radius:99px;background:#d8d5ea;position:relative;transition:.2s;flex:none}
+.switch .track{width:42px;height:24px;border-radius:99px;background:#CFE0D7;position:relative;transition:.2s;flex:none}
 .switch .track::after{content:"";position:absolute;inset:3px auto 3px 3px;width:18px;border-radius:50%;background:#fff;transition:.2s}
 .switch input:checked+.track{background:var(--brand)}
 .switch input:checked+.track::after{left:21px}

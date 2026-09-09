@@ -37,7 +37,7 @@
     { key: 'settings', name: '系统设置', ico: 'gear' }
   ];
 
-  var ACCENTS = [['#7a5af8', '#a78bfa'], ['#2e90fa', '#7cc4fd'], ['#12b76a', '#6ce9a6'], ['#f79009', '#fdb022'], ['#f04438', '#fda29b']];
+  var ACCENTS = [['#176B56', '#3E9B7E'], ['#2e90fa', '#7cc4fd'], ['#12b76a', '#6ce9a6'], ['#f79009', '#fdb022'], ['#f04438', '#fda29b']];
 
   var st = {
     page: 'overview',
@@ -71,7 +71,7 @@
     return '<span class="badge" style="background:' + c[1] + ';color:' + c[0] + '">' + esc(s) + '</span>';
   }
   function typeTag(t) {
-    var c = D.TYPE_COLORS[t] || '#7a5af8';
+    var c = D.TYPE_COLORS[t] || '#176B56';
     return '<span class="badge" style="background:' + c + '1f;color:' + c + '">' + esc(t) + '</span>';
   }
   function unitOf(t) {
@@ -297,7 +297,7 @@
           xFmt: function (s) { return s.slice(5); },
           series: [
             { name: '日死淘数', type: 'bar', axis: 'l', color: '#34d399', data: t.daily, unit: ' 只' },
-            { name: '累计死淘率', type: 'line', axis: 'r', color: '#7a5af8', data: t.cum, unit: '%' }
+            { name: '累计死淘率', type: 'line', axis: 'r', color: '#176B56', data: t.cum, unit: '%' }
           ]
         });
         C.donut($('#cShare', root), { items: S.alertTypeShare(st.shareDays).items, height: 280, title: '合计', unit: ' 起' });
@@ -698,7 +698,7 @@
           labels: t.labels, height: 250, lUnit: '只', rUnit: '%', xFmt: function (x) { return x.slice(5); },
           series: [
             { name: '日死淘数', type: 'bar', axis: 'l', color: '#fb7185', data: t.daily, unit: ' 只' },
-            { name: '累计死淘率', type: 'line', axis: 'r', color: '#7a5af8', data: t.cum, unit: '%' }
+            { name: '累计死淘率', type: 'line', axis: 'r', color: '#176B56', data: t.cum, unit: '%' }
           ]
         });
         var cause = {};
@@ -963,7 +963,7 @@
       try {
         C.combo($('#rTrend', root), {
           labels: r.labels, height: 260, lUnit: '只', xFmt: function (x) { return x.slice(5); },
-          series: [{ name: '日死淘数', type: 'bar', color: '#7a5af8', data: r.daily, unit: ' 只' },
+          series: [{ name: '日死淘数', type: 'bar', color: '#176B56', data: r.daily, unit: ' 只' },
                    { name: '7日移动平均', type: 'line', color: '#f79009', data: r.ma, unit: ' 只' }]
         });
         C.donut($('#rShare', root), { items: r.share, height: 260, title: '合计', unit: ' 起' });
