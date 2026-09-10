@@ -89,7 +89,7 @@ html[data-theme=dark]{color-scheme:dark}
 .f-card:hover{transform:translateY(-6px);box-shadow:0 24px 50px -26px rgba(37,99,235,.35);border-color:color-mix(in srgb,var(--brand) 30%,var(--line))}
 .f-card:hover::before{opacity:1}
 .f-ico{width:48px;height:48px;border-radius:15px;background:linear-gradient(135deg,color-mix(in srgb,var(--brand) 12%,var(--card)),color-mix(in srgb,var(--brand-2) 8%,var(--card)));color:var(--brand-ink);display:grid;place-items:center;margin-bottom:16px;border:1px solid color-mix(in srgb,var(--brand) 16%,transparent);transition:transform .25s ease,background .25s ease,color .25s ease,box-shadow .25s ease}
-.f-ico .ico{width:24px;height:24px}
+.f-ico svg{width:24px;height:24px}
 .f-card:hover .f-ico{transform:translateY(-3px) scale(1.06);background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;box-shadow:0 12px 24px -10px var(--brand)}
 .f-card h3{font-size:17px;margin-bottom:8px}
 .f-card p{color:var(--ink-2);font-size:13.5px}
@@ -192,3 +192,15 @@ html[data-theme=dark]{color-scheme:dark}
   .hero-demo{margin-top:6px}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+/* ================= 登录弹窗（无标题 → 关闭按钮悬浮右上角） ================= */
+.portal .mask .modal.sm{max-width:430px;position:relative}
+.portal .mask .modal.sm .modal-hd{position:absolute;top:10px;right:10px;padding:0;z-index:2;gap:0}
+.portal .mask .modal.sm .modal-hd h3{display:none}
+.portal .mask .modal.sm .modal-hd .icon-btn{width:34px;height:34px;justify-content:center;padding:0;border-radius:10px}
+.portal .mask .modal.sm .modal-bd{padding:24px 26px 12px}
+.portal .mask .modal.sm .lg-logo{margin-top:0}
+
+@media(max-width:460px){
+  .portal .mask .modal.sm .modal-bd{padding:22px 18px 12px}
+}

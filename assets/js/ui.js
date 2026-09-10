@@ -43,8 +43,9 @@
     cpu: '<rect x="7" y="7" width="10" height="10" rx="1.8"/><path d="M10 3.5V7M14 3.5V7M10 17v3.5M14 17v3.5M3.5 10H7M3.5 14H7M17 10h3.5M17 14h3.5"/>'
   };
   function icon(n, size) {
+    size = size || 18; /* 默认尺寸：避免 svg 被全局 reset 压成 0×0 */
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" ' +
-      'stroke-linecap="round" stroke-linejoin="round"' + (size ? ' width="' + size + '" height="' + size + '"' : '') +
+      'stroke-linecap="round" stroke-linejoin="round" width="' + size + '" height="' + size + '"' +
       ' aria-hidden="true">' + (ICONS[n] || '') + '</svg>';
   }
 
